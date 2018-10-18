@@ -1,0 +1,112 @@
+/**
+ * 
+ */
+package com.kinvecc.jdbc_test;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import com.kinvecc.util.Util;
+import com.kinvecc.util.WriteToFile;
+
+
+/**
+ * @author kinve
+ *
+ */
+public class Jdbc_test {
+		private static String path="E:/test.txt";
+		//定义数据库驱动信息
+		private static final String DRIVER = "com.mysql.jdbc.Driver";
+		//定义数据库地址
+		private static final String URL = "jdbc:mysql://127.0.0.1:3306/test";
+		//定义数据库访问用户名
+		private static String user="root";
+		//定义数据库访问密码
+		private static String pwd="1234";
+		private static Statement statement =null;
+		//private static Statement statement2 =null;
+		private static Connection con = null;
+		private static String sql1="select * from country";
+		private static String sql2="select username from user_info";
+		
+		public static void main(String[] args) throws SQLException {
+			ResultSet result1=null;
+			ResultSet result2=null;
+			
+			if (testCon()==null) {
+				System.out.println("con failed");
+			}
+			statement=con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+			//statement2=con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+			result1=statement.executeQuery(sql1);
+			
+			//获取记录数
+			result1.last();//移到最后一行
+			//int rows = result1.getRow();
+			result1.beforeFirst();//移到初始位置
+			
+			//获取字段个数
+			ResultSetMetaData   rsmd1 = result1.getMetaData();
+			int   cells = rsmd1.getColumnCount();
+			
+			
+			String stt1="ci=\"";
+			while(result1.next()) {
+				for (int i = 1; i <=cells; i++) {
+					stt1=stt1+result1.getString(i)+"\r\n";
+					WriteToFile.write(path, stt1);
+					stt1="";
+				}
+			}
+			WriteToFile.write(path, stt1+"\"\r\n");
+			
+			result2=statement.executeQuery(sql2);
+			//获取记录数
+			result2.last();//移到最后一行
+			int rows2 = result2.getRow();
+			result2.beforeFirst();//移到初始位置
+			
+			//获取字段个数
+			ResultSetMetaData   rsmd2 = result2.getMetaData();
+			int   cells2 = rsmd2.getColumnCount();
+		
+			result2=statement.executeQuery(sql2);
+			String stt2="q='";
+			int index=0;
+			while(result2.next()) {
+				index+=1;
+				for (int i = 1; i <=cells2; i++) {
+					stt2=stt2+"\""+result2.getString(i)+"\"";
+					if(!(index==rows2 && i==cells2)) {
+						stt2=stt2+",";
+					}
+					WriteToFile.write(path, stt2);
+					stt2="";
+				}
+			}
+			WriteToFile.write(path, stt2+"\'");
+			Util.closeAll();
+			}
+		/**
+		 * 
+		 */
+		private static Connection testCon() {
+			try {
+				Class.forName(DRIVER);
+				con = DriverManager.getConnection(URL,user,pwd);
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return con;
+		}
+}
